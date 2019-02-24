@@ -42,22 +42,19 @@ describe('Spike methods', () => {
 
   describe('drainCalories', () => {
     it('should drain calories from a vitals object', () => {
-      const vitals = { calories: 100, diesAt: 50, isDead: false };
-      drainCalories(vitals, 25);
+      const { vitals } = drainCalories({ calories: 100, diesAt: 50, isDead: false }, 25);
 
       expect(vitals.calories).to.equal(75);
     });
 
     it('should return the actual amount drained', () => {
-      const vitals = { calories: 100, diesAt: 50, isDead: false };
-      const actualDrain = drainCalories(vitals, 200);
+      const { drain } = drainCalories({ calories: 100, diesAt: 50, isDead: false }, 200);
 
-      expect(actualDrain).to.equal(100);
+      expect(drain).to.equal(100);
     });
 
     it('should mark vitals as dead if calories drops below threshold', () => {
-      const vitals = { calories: 100, diesAt: 50, isDead: false };
-      drainCalories(vitals, 75);
+      const { vitals } = drainCalories({ calories: 100, diesAt: 50, isDead: false }, 75);
 
       expect(vitals.isDead).to.equal(true);
     });

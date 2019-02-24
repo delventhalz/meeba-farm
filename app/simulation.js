@@ -310,8 +310,9 @@ const getSpikeActivator = (delay, tick) => (body, other) => {
         spike.fill = 'red';
         spike.meta.deactivateTime = tick + SPIKE_HIGHLIGHT_TIME;
 
-        const drainAmount = drainCalories(other.vitals, Math.floor(spike.drain * delay));
-        body.vitals.calories += drainAmount;
+        const { vitals, drain } = drainCalories(other.vitals, Math.floor(spike.drain * delay));
+        other.vitals = vitals;
+        body.vitals.calories += drain;
       }
     }
   }
