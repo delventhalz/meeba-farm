@@ -88,17 +88,18 @@ export const spawnSpike = (radius, angle, length) => {
 };
 
 /**
- * Returns a function that updates the current location of a spike
+ * Returns a function that returns a spike with updated x/y coordinates
  *
  * @param {number} x - the x position of the spike's meeba
  * @param {number} y - the x position of the spike's meeba
- * @returns {function(Spike): void} - mutates the spike's location
+ * @returns {function(Spike): Spike}
  */
-export const getSpikeMover = (x, y) => (spike) => {
-  spike.x1 = x + spike.offset.x1;
-  spike.y1 = y + spike.offset.y1;
-  spike.x2 = x + spike.offset.x2;
-  spike.y2 = y + spike.offset.y2;
-  spike.x3 = x + spike.offset.x3;
-  spike.y3 = y + spike.offset.y3;
-};
+export const getSpikeMover = (x, y) => (spike) => ({
+  ...spike,
+  x1: x + spike.offset.x1,
+  y1: y + spike.offset.y1,
+  x2: x + spike.offset.x2,
+  y2: y + spike.offset.y2,
+  x3: x + spike.offset.x3,
+  y3: y + spike.offset.y3,
+});

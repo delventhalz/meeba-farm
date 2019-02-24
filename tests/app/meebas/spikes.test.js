@@ -52,7 +52,7 @@ describe('Spike methods', () => {
 
     it('should move a spike relative to a meeba center point', () => {
       const moveSpike = getSpikeMover(100, 100);
-      const spike = {
+      const spike = moveSpike({
         x1: 0,
         y1: 0,
         x2: 0,
@@ -67,9 +67,7 @@ describe('Spike methods', () => {
           x3: 5,
           y3: 5,
         },
-      };
-
-      moveSpike(spike);
+      });
 
       expect(spike.x1).to.equal(110);
       expect(spike.y1).to.equal(100);

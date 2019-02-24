@@ -140,7 +140,6 @@ const replicateParent = (parent, angle) => {
   const relativeLocation = toVector({ angle, speed: 2 * body.radius });
   const x = parent.x + relativeLocation.x;
   const y = parent.y + relativeLocation.y;
-  body.spikes.forEach(getSpikeMover(x, y));
 
   return {
     ...body,
@@ -152,6 +151,7 @@ const replicateParent = (parent, angle) => {
       speed: parent.velocity.speed,
     },
     vitals: setCalories(body.vitals, Math.floor(parent.vitals.calories / 2)),
+    spikes: body.spikes.map(getSpikeMover(x, y)),
   };
 };
 
@@ -176,8 +176,7 @@ const moveBody = (body) => {
   body.x = body.meta.nextX;
   body.y = body.meta.nextY;
 
-  const moveSpike = getSpikeMover(body.x, body.y);
-  body.spikes.forEach(moveSpike);
+  body.spikes = body.spikes.map(getSpikeMover(body.x, body.y));
 };
 
 /**
