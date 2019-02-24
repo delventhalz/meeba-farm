@@ -55,31 +55,40 @@ export const toVelocity = ({ x, y }) => {
 };
 
 /**
- * Elastically collide a body against a horizontal wall
+ * Update a velocity to simulate an elastic collision with a horizontal wall
  *
- * @param {Body} body - body to collide; mutated!
+ * @param {Velocity} velocity - the velocity to bounce
+ * @returns {Velocity} - the updated velocity
  */
-export const bounceX = ({ velocity }) => {
+export const bounceX = (velocity) => {
   const { angle } = velocity;
-  velocity.angle = angle <= 0.5 ? 0.5 - angle : 1.5 - angle;
+  return {
+    ...velocity,
+    angle: angle <= 0.5 ? 0.5 - angle : 1.5 - angle,
+  };
 };
 
 /**
- * Elastically collide a body against a vertical wall
+ * Update a velocity to simulate an elastic collision with a vertical wall
  *
- * @param {Body} body - body to collide; mutated!
+ * @param {Velocity} velocity - the velocity to bounce
+ * @returns {Velocity} - the updated velocity
  */
-export const bounceY = ({ velocity }) => {
+export const bounceY = (velocity) => {
   const { angle } = velocity;
-  velocity.angle = angle === 0 ? 0 : 1 - angle;
+  return {
+    ...velocity,
+    angle: angle === 0 ? 0 : 1 - angle,
+  };
 };
 
 /**
  * Elastically collide two bodies, based on math outlined here:
  * http://vobarian.com/collisions/2dcollisions2.pdf
  *
- * @param {Body} body1 - first body to collide; mutated!
- * @param {Body} body2 - second body to collide; mutated!
+ * @param {Body} body1 - first body to collide
+ * @param {Body} body2 - second body to collide
+ * @returns {[Body, Body]} - the bodies with updated velocities
  */
 export const collide = (body1, body2) => {
   const m1 = body1.mass;
@@ -117,8 +126,20 @@ export const collide = (body1, body2) => {
   const { speed: speed1, angle: angle1 } = toVelocity(v1F);
   const { speed: speed2, angle: angle2 } = toVelocity(v2F);
 
-  body1.velocity.speed = speed1;
-  body1.velocity.angle = angle1;
-  body2.velocity.speed = speed2;
-  body2.velocity.angle = angle2;
+  return [
+    {
+      ...body1,
+      velocity: {
+        angle: angle1,
+        speed: speed1,
+      },
+    },
+    {
+      ...body2,
+      velocity: {
+        angle: angle2,
+        speed: speed2,
+      },
+    },
+  ];
 };

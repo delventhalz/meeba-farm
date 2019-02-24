@@ -190,13 +190,13 @@ const getWallBouncer = (delay) => (body) => {
   const { radius, velocity: { angle }, meta: { nextX, nextY } } = body;
 
   if (getGap(0, angle) < 0.25 && nextX > width - radius) {
-    bounceX(body);
+    body.velocity = bounceX(body.velocity);
   } else if (getGap(0.25, angle) < 0.25 && nextY < radius) {
-    bounceY(body);
+    body.velocity = bounceY(body.velocity);
   } else if (getGap(0.5, angle) < 0.25 && nextX < radius) {
-    bounceX(body);
+    body.velocity = bounceX(body.velocity);
   } else if (getGap(0.75, angle) < 0.25 && nextY > height - radius) {
-    bounceY(body);
+    body.velocity = bounceY(body.velocity);
   } else {
     return;
   }
@@ -287,7 +287,9 @@ const getBodyCollider = (delay) => (body1, body2) => {
     && (willOverlap(body1, body2) || isOverlapping(body1, body2));
 
   if (shouldCollide) {
-    collide(body1, body2);
+    const [{ velocity: velocity1 }, { velocity: velocity2 }] = collide(body1, body2);
+    body1.velocity = velocity1;
+    body2.velocity = velocity2;
     getMoveCalculator(delay)(body1);
     getMoveCalculator(delay)(body2);
     body1.meta.lastCollisionBody = body2;
