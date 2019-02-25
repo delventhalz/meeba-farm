@@ -11,29 +11,20 @@ import { randInt } from '../utils/math.js';
  */
 
 /**
+ * Parsed representation of a single gene
+ *
+ * @typedef Gene
+ * @prop {number} type - the control-byte for the gene
+ * @prop {number} location - where in the gene appears, 0 (start) to 1 (end)
+ * @prop {Uint8Array} bytes - remaining bytes of the gene
+ */
+
+/**
  * Instructions for building a spike
  *
  * @typedef SpikeCommand
  * @prop {number} length - length of spike in pixels
  * @prop {number} angle - position around meeba circumference (in turns)
- */
-
-/**
- * Called when iterating over a genome and encountering a new gene. Returns
- * the appropriate reader function for the following bytes
- *
- * @callback GeneReader
- * @param {Commands} commands - commands object to update; mutated!
- * @param {number} [start] - the index of the control byte
- * @param {Uint8Array} [genome] - the full genome
- * @returns {ByteReader}
- */
-
-/**
- * Reads a byte and modifies a command object as needed
- *
- * @callback ByteReader
- * @param {number} [byte]
  */
 
 const { averageStartingGeneCount, averageStartingGeneSize } = settings.meebas;
@@ -70,53 +61,49 @@ export const createGenome = () => {
 };
 
 /**
- * Count the number of 1 bits in a byte
+ * Count the number of 1 bits in series of bytes
  *
- * @param {number} byte
+ * @param {Uint8Array} bytes
  * @returns {number} - number of 1's
  */
-const countBits = byte => byte
-  .toString(2)
-  .split('')
-  .filter(bit => bit === '1')
-  .length;
+const countBits = bytes => bytes.reduce((count, byte) => (
+  count + byte.toString(2).split('').filter(bit => bit === '1').length
+), 0);
+
 
 /**
  * Split a full genome into an array of genes each with a leading control byte
  *
- * @param {Uint8Array} genome - full genome
- * @returns {Uint8Array[]} - array of sub-genes
+ * @param {Uint8Array} genome - the full genome
+ * @returns {Gene[]}
  */
-const toGenes = genome => genome
-  .map((byte, i) => (byte >= 0xF0 ? i : null))
-  .filter(index => index !== null)
-  .map((index, i, indexes) => genome.slice(i, indexes[i + 1]));
+const toGenes = genome => Array.from(genome)
+  .map((byte, i) => (byte >= 0xF0 ? i : -1))
+  .filter(index => index !== -1)
+  .map((index, i, indexes) => ({
+    type: genome[index],
+    location: index / genome.length,
+    bytes: genome.slice(index + 1, indexes[i + 1]),
+  }));
 
-// eslint-disable-next-line valid-jsdoc
-/** @type {GeneReader} */
-const getSizeReader = (commands) => (byte) => {
-  commands.size += countBits(byte) * BITS_PER_SIZE_PIXEL;
-};
+/**
+ * Read a size gene, returning the number of pixels in size it produces
+ *
+ * @param {Gene} gene - the size gene
+ * @returns {number} - the amount of size this gene contributes
+ */
+const readSizeGene = ({ bytes }) => Math.floor(countBits(bytes) / BITS_PER_SIZE_PIXEL);
 
-// eslint-disable-next-line valid-jsdoc
-/** @type {GeneReader} */
-const getSpikeReader = (commands, start, genome) => {
-  const spike = { length: 0, angle: start / genome.length };
-  commands.spikes.push(spike);
-
-  return (byte) => {
-    spike.length += Math.floor(countBits(byte) / BITS_PER_SPIKE_LENGTH);
-  };
-};
-
-/** @type {ByteReader} */
-const noopReader = () => {};
-
-/** @type {Object<string, GeneReader>} */
-const GENE_READERS = {
-  0xF0: getSizeReader,
-  0xF1: getSpikeReader,
-};
+/**
+ * Read a spike gene, returning the basic instructions for building a spike object
+ *
+ * @param {Gene} gene - the spike gene
+ * @returns {SpikeCommand}
+ */
+const readSpikeGene = ({ location, bytes }) => ({
+  angle: location,
+  length: Math.floor(countBits(bytes) / BITS_PER_SPIKE_LENGTH),
+});
 
 /**
  * Interprets a genome, returning a command object with instructions
@@ -126,24 +113,17 @@ const GENE_READERS = {
  * @returns {Commands}
  */
 export const readGenome = (genome) => {
-  /** @type {Commands} */
-  const commands = {
-    size: 0,
-    spikes: [],
-  };
-  let read = noopReader;
+  const genes = toGenes(genome);
 
-  genome.forEach((byte, i) => {
-    if (byte >= 0xF0) {
-      read = GENE_READERS[byte]
-        ? GENE_READERS[byte](commands, i, genome)
-        : noopReader;
-    } else {
-      read(byte);
-    }
-  });
+  const size = genes
+    .filter(({ type }) => type === 0xF0)
+    .reduce((sum, gene) => sum + readSizeGene(gene), 0);
 
-  return commands;
+  const spikes = genes
+    .filter(({ type }) => type === 0xF1)
+    .map(readSpikeGene);
+
+  return { size, spikes };
 };
 
 /**
